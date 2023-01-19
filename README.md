@@ -38,10 +38,12 @@ Output | Simulation
 
 ## Sample video results
 
-https://drive.google.com/file/d/1W166MqkJuvYB1mTcX0Ra34P-YCeQ1qBT/view?usp=sharing
+https://user-images.githubusercontent.com/73867181/213396314-307dbe62-7ba8-4db8-80dd-cf13bad44965.mp4
 
 
-https://drive.google.com/file/d/1PlcUPAzM5WMJOYFflsaqf7EmHEWHDRwk/view?usp=sharing
+
+https://user-images.githubusercontent.com/73867181/213396469-e9d2dc8d-ff39-403c-8ba7-369bf688f1eb.mp4
+
 
 # Instructions‼️‼️
 1. A high quality camera is recommended to be used for capturing. You may also use phone camera or any external camera for better image quality hence improve the performance.
