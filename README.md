@@ -38,10 +38,10 @@ Output | Simulation
 
 ## Sample video results
 
-https://cdn.discordapp.com/attachments/709066676800323605/1065551048527319050/output_video.mp4
+https://drive.google.com/file/d/1W166MqkJuvYB1mTcX0Ra34P-YCeQ1qBT/view?usp=sharing
 
 
-https://cdn.discordapp.com/attachments/709066676800323605/1065551048195977286/simulation_video.mp4
+https://drive.google.com/file/d/1PlcUPAzM5WMJOYFflsaqf7EmHEWHDRwk/view?usp=sharing
 
 # Instructions‼️‼️
 1. A high quality camera is recommended to be used for capturing. You may also use phone camera or any external camera for better image quality hence improve the performance.
