@@ -1,10 +1,11 @@
 import copy
 import random
-import numpy as np
-from centroid_tracking.config import cfg
-from centroid_tracking.bound_tracking import p2_track
-from core.utils import euclidean_distance
 import string
+
+import numpy as np
+from centroid_tracking.bound_tracking import p2_track
+from centroid_tracking.config import cfg
+from core.utils import euclidean_distance
 
 """
     Unbound ball state - the ball is tossed into the air (siteswap notation 1 - 8 except 2)
@@ -43,9 +44,9 @@ class Tracker:
     def read_class_names(self, class_file_name):
         # load in yolo object class
         names = {}
-        with open(class_file_name, 'r') as data:
+        with open(class_file_name, "r") as data:
             for ID, name in enumerate(data):
-                names[ID] = name.strip('\n')
+                names[ID] = name.strip("\n")
         return names
 
     def frequency_checking(self):
@@ -73,17 +74,17 @@ class Tracker:
         pred_pos = []
 
         A, B, C = np.polyfit(poslistX, poslistY, degree)
-        if pairB["axis"] == 'y':
+        if pairB["axis"] == "y":
             mean_trace = np.mean(np.array(pairB["trace"])[:, 0][:-1])
             if pairB["trace"][-1][0] < mean_trace:
                 posList = list(
-                    reversed([pos for pos in range(0, int(pairB["trace"][-1][0])-1)]))
+                    reversed([pos for pos in range(0, int(pairB["trace"][-1][0]) - 1)])
+                )
             else:
-                posList = [pos for pos in range(
-                    int(pairB["trace"][-1][0])+1, 1280)]
+                posList = [pos for pos in range(int(pairB["trace"][-1][0]) + 1, 1280)]
 
             for pos in posList[:5]:
-                poly_val = A*(pos**2)+B*pos+C
+                poly_val = A * (pos**2) + B * pos + C
                 if poly_val < 0:
                     break
                 pred_pos.append([pos, poly_val])
@@ -91,24 +92,21 @@ class Tracker:
             if len(pred_pos) < 1:
                 return False
             mean_pos = np.mean(pred_pos, axis=0)
-            distance = euclidean_distance(
-                pairA[0], pairA[1], mean_pos[0], mean_pos[1])
+            distance = euclidean_distance(pairA[0], pairA[1], mean_pos[0], mean_pos[1])
             print(distance)
             if distance <= 70:
                 return True
             return False
 
-        elif pairB["axis"] == 'x':
+        elif pairB["axis"] == "x":
             mean_trace = np.mean(np.array(pairB["trace"])[:, 1][:-1])
             if pairB["trace"][-1][1] < mean_trace:
-                posList = [pos for pos in range(
-                    0, int(pairB["trace"][-1][1])-1)]
+                posList = [pos for pos in range(0, int(pairB["trace"][-1][1]) - 1)]
             else:
-                posList = [pos for pos in range(
-                    int(pairB["trace"][-1][1])+1, 720)]
+                posList = [pos for pos in range(int(pairB["trace"][-1][1]) + 1, 720)]
 
             for pos in posList[:5]:
-                poly_val = A*(pos**2)+B*pos+C
+                poly_val = A * (pos**2) + B * pos + C
                 if poly_val < 0:
                     break
                 pred_pos.append([pos, poly_val])
@@ -116,8 +114,7 @@ class Tracker:
             if len(pred_pos) < 0:
                 return False
             mean_pos = np.mean(pred_pos, axis=0)
-            distance = euclidean_distance(
-                pairA[0], pairA[1], mean_pos[0], mean_pos[1])
+            distance = euclidean_distance(pairA[0], pairA[1], mean_pos[0], mean_pos[1])
             print(distance)
             if distance <= 70:
                 return True
@@ -147,13 +144,15 @@ class Tracker:
                 pairB["axis"] = "y"
 
         if pairB["axis"] == "x":
-            unit = (pairB["trace"][-1][0] + pairB["trace"][-2][0])//2
+            unit = (pairB["trace"][-1][0] + pairB["trace"][-2][0]) // 2
         else:
-            unit = (pairB["trace"][-1][1] + pairB["trace"][-2][1])//2
+            unit = (pairB["trace"][-1][1] + pairB["trace"][-2][1]) // 2
 
         (x1, y1), (x2, y2) = pairB["trace"][-2:]
         (x3, y3) = pairA[0], pairA[1]
-        area = abs(round(((x1*(y2-y3)) + (x2*(y3-y1)) + (x3*(y1-y2)))/unit, 1))
+        area = abs(
+            round(((x1 * (y2 - y3)) + (x2 * (y3 - y1)) + (x3 * (y1 - y2))) / unit, 1)
+        )
         # print(area)
         if area <= self.collinearity_thres:
             return True
@@ -164,11 +163,20 @@ class Tracker:
         color = tuple(np.random.randint(256, size=3))
         color = (int(color[0]), int(color[1]), int(color[2]))
 
-        obj_pair = dict(ID=str(int(random.randint(0, 1000))), centroid_point=[centroid[0], centroid[1]],
-                        p1=centroid[2], p2=centroid[3], state=[], trace=[
-                            [centroid[0], centroid[1]]],
-                        frequency=0, distance_level=centroid[4], colors=color, hand_xy=[], hand_seq=[],
-                        axis=None)
+        obj_pair = dict(
+            ID=str(int(random.randint(0, 1000))),
+            centroid_point=[centroid[0], centroid[1]],
+            p1=centroid[2],
+            p2=centroid[3],
+            state=[],
+            trace=[[centroid[0], centroid[1]]],
+            frequency=0,
+            distance_level=centroid[4],
+            colors=color,
+            hand_xy=[],
+            hand_seq=[],
+            axis=None,
+        )
         return obj_pair
 
     def unbound_ball_screening(self, ball_pair):
@@ -200,18 +208,19 @@ class Tracker:
 
             # check distance level with recpect to ball width ratio
             distance_level = 1 if width >= 57 else 2
-            centroids.append([cw, ch, c1, c2, distance_level,
-                             string.ascii_lowercase[i]])
+            centroids.append(
+                [cw, ch, c1, c2, distance_level, string.ascii_lowercase[i]]
+            )
 
         return centroids
         # self.object_checking(centroids)
 
     def object_checking(self, centroids):
         """
-            opt for different tracking progress
-            1. no objects detected - check for frequency
-            2. if existing pair ball is empty - initialization
-            3. else goes into tracking process
+        opt for different tracking progress
+        1. no objects detected - check for frequency
+        2. if existing pair ball is empty - initialization
+        3. else goes into tracking process
         """
         num_centroid = len(centroids)
         num_pair = len(self.pair_ball)
@@ -242,7 +251,9 @@ class Tracker:
         print(centroids)
         print()
         print("Pair ball")
-        print(self.pair_ball)
+        for pb in self.pair_ball:
+            print(f"pb color: {pb['colors']}")
+            print(pb)
         print()
         match_distance = []
         for centroid in centroids:
@@ -261,7 +272,7 @@ class Tracker:
                     axis_distance = 0
                     if ball["axis"] == "x":
                         axis_distance = abs(ball["trace"][-1][1] - centroid[1])
-                    elif ball["axis"] == 'y':
+                    elif ball["axis"] == "y":
                         axis_distance = abs(ball["trace"][-1][0] - centroid[0])
 
                     if axis_distance >= 20:
@@ -269,10 +280,26 @@ class Tracker:
                     if ball["axis"] != None:
                         axis = 0
                     geo_distance = euclidean_distance(
-                        ball["centroid_point"][0], ball["centroid_point"][1], centroid[0], centroid[1])
+                        ball["centroid_point"][0],
+                        ball["centroid_point"][1],
+                        centroid[0],
+                        centroid[1],
+                    )
                     distance = geo_distance - axis_distance
-                    match_distance.append([distance, ball["ID"], centroid[0], centroid[1], centroid[2], centroid[3], centroid[4],
-                                           centroid[5], centroid, axis])
+                    match_distance.append(
+                        [
+                            distance,
+                            ball["ID"],
+                            centroid[0],
+                            centroid[1],
+                            centroid[2],
+                            centroid[3],
+                            centroid[4],
+                            centroid[5],
+                            centroid,
+                            axis,
+                        ]
+                    )
 
         print("Match distance")
         print(match_distance)
@@ -283,26 +310,30 @@ class Tracker:
                 break
 
             # shortest_pair = min(match_distance, key = lambda x:x[0])
-            shortest_pair = sorted(
-                match_distance, key=lambda x: (x[-1], x[0]))[0]
+            shortest_pair = sorted(match_distance, key=lambda x: (x[-1], x[0]))[0]
             # get the matched pair ball ID and centroid ID
             centroid_ID = shortest_pair[-2]
             pair_ball_ID = shortest_pair[1]
             if shortest_pair[0] > 121:
-                [match_distance.remove(
-                    pair) for pair in match_distance[:] if pair[-2] == centroid_ID]
+                [
+                    match_distance.remove(pair)
+                    for pair in match_distance[:]
+                    if pair[-2] == centroid_ID
+                ]
                 continue
 
             # remove shortest pair from match_distance and centroids
-            [match_distance.remove(pair) for pair in match_distance[:]
-             if pair[-2] == centroid_ID or pair[1] == pair_ball_ID]
+            [
+                match_distance.remove(pair)
+                for pair in match_distance[:]
+                if pair[-2] == centroid_ID or pair[1] == pair_ball_ID
+            ]
             centroids.remove(shortest_pair[-2])
 
             # update pair ball with the matched centroid
             for pair_ball in self.pair_ball:
                 if pair_ball["ID"] == pair_ball_ID:
-                    pair_ball["centroid_point"] = [
-                        shortest_pair[2], shortest_pair[3]]
+                    pair_ball["centroid_point"] = [shortest_pair[2], shortest_pair[3]]
                     pair_ball["trace"].append(pair_ball["centroid_point"])
                     pair_ball["p1"] = shortest_pair[4]
                     pair_ball["p2"] = shortest_pair[5]
@@ -342,7 +373,8 @@ class Tracker:
                 self.p2_balls.append(bound_ball)
         elif self.frame_sequence > 1:
             frame, pred_ball_p2, self.location, self.p2_balls = p2_track(
-                self.location, self.p2_balls, bound_ball_pair, frame)
+                self.location, self.p2_balls, bound_ball_pair, frame
+            )
 
         # notation 1 tracking
         # if len(self.p1_balls) < 1:
@@ -352,5 +384,5 @@ class Tracker:
         #     frame, pred_ball_p1, self.p1_balls = p1_track(ball_pair, self.p1_balls, bound_ball_pair_copy, frame)
 
         # finalized pred balls
-        pred_balls = pred_ball_p1+pred_ball_p2
+        pred_balls = pred_ball_p1 + pred_ball_p2
         return frame, pred_balls

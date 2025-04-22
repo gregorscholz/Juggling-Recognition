@@ -1,40 +1,45 @@
-from core.posemodule import poseDetector
-from core.analysis import create_dashboard
-from core.analysis import analysis
-from centroid_tracking.tracker import Tracker
-from core.utils import *
-from tensorflow.python.keras.models import load_model
-from tensorflow.compat.v1 import InteractiveSession
-from tensorflow.compat.v1 import ConfigProto
-from absl.flags import FLAGS
-import numpy as np
-import cv2
-from absl import app, flags
-from tensorflow.python.saved_model import tag_constants
-import tensorflow as tf
-import time
 import os
+import time
+
+import cv2
+import numpy as np
+import tensorflow as tf
+from absl import app, flags
+from absl.flags import FLAGS
+from centroid_tracking.tracker import Tracker
+from core.analysis import analysis, create_dashboard
+from core.posemodule import poseDetector
+from core.utils import *
+from keras.api.models import load_model
+from tensorflow.python.saved_model import tag_constants
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
-flags.DEFINE_string('framework', 'tf', '(tf, tflite, trt')
-flags.DEFINE_string('weights_ball', './checkpoints/3l4b3_ball_416',
-                    'path to weights ball file')
-flags.DEFINE_string('weights_palm', './checkpoints/custom-tiny-palm-416',
-                    'path to weights palm file')
-flags.DEFINE_integer('size', 416, 'resize images to')
-flags.DEFINE_boolean('tiny', True, 'yolo or yolo-tiny')
-flags.DEFINE_string('model', 'yolov4-tiny-3l', 'yolov3 or yolov4')
-flags.DEFINE_string('video', 'src/video0.mov', 'path to input video')
-flags.DEFINE_float('iou', 0.25, 'iou threshold')
-flags.DEFINE_float('score', 0.30, 'score threshold')
-flags.DEFINE_string('output_format', 'XVID',
-                    'codec used in VideoWriter when saving video to file')
-flags.DEFINE_string('output', 'output.avi', 'path to output video')
-flags.DEFINE_string('demo_output', 'demo.avi', 'path to demo output video')
-flags.DEFINE_string('ptn_model', 'checkpoints/pattern_model.h5',
-                    'path to pattern recognition model')
-flags.DEFINE_boolean('gpu', True, 'activate gpu - True else False')
+flags.DEFINE_string("framework", "tf", "(tf, tflite, trt")
+flags.DEFINE_string(
+    "weights_ball", "./checkpoints/3l4b3_ball_416", "path to weights ball file"
+)
+flags.DEFINE_string(
+    "weights_palm", "./checkpoints/custom-tiny-palm-416", "path to weights palm file"
+)
+flags.DEFINE_integer("size", 416, "resize images to")
+flags.DEFINE_boolean("tiny", True, "yolo or yolo-tiny")
+flags.DEFINE_string("model", "yolov4-tiny-3l", "yolov3 or yolov4")
+flags.DEFINE_string("video", "src/W(423)_3.mp4", "path to input video")
+flags.DEFINE_float("iou", 0.25, "iou threshold")
+flags.DEFINE_float("score", 0.30, "score threshold")
+flags.DEFINE_string(
+    "output_format", "XVID", "codec used in VideoWriter when saving video to file"
+)
+flags.DEFINE_string("output", "output.avi", "path to output video")
+flags.DEFINE_string("demo_output", "demo.avi", "path to demo output video")
+flags.DEFINE_string(
+    "ptn_model",
+    "pattern_recog_model_generator/pattern_model.h5",
+    "path to pattern recognition model",
+)
+flags.DEFINE_boolean("gpu", False, "activate gpu - True else False")
 
 
 def main(_argv):
@@ -53,17 +58,18 @@ def main(_argv):
 
     if gpu:
         # set up gpu setting
-        physical_devices = tf.config.experimental.list_physical_devices('GPU')
+        physical_devices = tf.config.experimental.list_physical_devices("GPU")
         if len(physical_devices) > 0:
             tf.config.experimental.set_memory_growth(physical_devices[0], True)
-        config = ConfigProto()
-        config.gpu_options.allow_growth = True
-        session = InteractiveSession(config=config)
+        # config = ConfigProto()
+        # config.gpu_options.allow_growth = True
+        # session = InteractiveSession(config=config)
 
     # load in all the models
     saved_model_loaded_ball = tf.saved_model.load(
-        weights_ball, tags=[tag_constants.SERVING])
-    infer_ball = saved_model_loaded_ball.signatures['serving_default']
+        weights_ball, tags=[tag_constants.SERVING]
+    )
+    infer_ball = saved_model_loaded_ball.signatures["serving_default"]
     pattern_model = load_model(pattern_model)
     pose_detector = poseDetector()  # human pose estimator
 
@@ -75,16 +81,14 @@ def main(_argv):
         vid = cv2.VideoCapture(video_path)  # else - video input
 
     # get os resolution for display purpose
-    rescale_width, rescale_height, image_width, image_height = resolution_display(
-        vid)
+    rescale_width, rescale_height, image_width, image_height = resolution_display(vid)
 
     # initialize video writer
     if output:
         fps = 20
         codec = cv2.VideoWriter_fourcc(*output_format)
         out = cv2.VideoWriter(output, codec, fps, (image_width, image_height))
-        demo_out = cv2.VideoWriter(
-            demo_output, codec, fps, (image_width, image_height))
+        demo_out = cv2.VideoWriter(demo_output, codec, fps, (image_width, image_height))
 
     tracker = Tracker()  # initialize tracker
     ptns = []
@@ -110,7 +114,7 @@ def main(_argv):
 
             # ball detection
             image_data = cv2.resize(frame, (input_size, input_size))
-            image_data = image_data / 255.
+            image_data = image_data / 255.0
             image_data = image_data[np.newaxis, ...].astype(np.float32)
 
             # capture the detection box
@@ -121,20 +125,27 @@ def main(_argv):
                 pred_conf_ball = value[:, :, 4:]
 
             # non max suppression
-            boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
-                boxes=tf.reshape(
-                    boxes_ball, (tf.shape(boxes_ball)[0], -1, 1, 4)),
-                scores=tf.reshape(
-                    pred_conf_ball, (tf.shape(pred_conf_ball)[0], -1, tf.shape(pred_conf_ball)[-1])),
-                max_output_size_per_class=50,
-                max_total_size=50,
-                iou_threshold=iou,
-                score_threshold=score
+            boxes, scores, classes, valid_detections = (
+                tf.image.combined_non_max_suppression(
+                    boxes=tf.reshape(boxes_ball, (tf.shape(boxes_ball)[0], -1, 1, 4)),
+                    scores=tf.reshape(
+                        pred_conf_ball,
+                        (tf.shape(pred_conf_ball)[0], -1, tf.shape(pred_conf_ball)[-1]),
+                    ),
+                    max_output_size_per_class=50,
+                    max_total_size=50,
+                    iou_threshold=iou,
+                    score_threshold=score,
+                )
             )
 
             # finalized pred bbox
-            pred_bbox = [boxes.numpy(), scores.numpy(
-            ), classes.numpy(), valid_detections.numpy()]
+            pred_bbox = [
+                boxes.numpy(),
+                scores.numpy(),
+                classes.numpy(),
+                valid_detections.numpy(),
+            ]
 
             # perform unbound tracking
             pair_ball = tracker.track(frame, pred_bbox)
@@ -143,7 +154,12 @@ def main(_argv):
             bound_ball = mapping(tracker.pair_ball, [right_palm, left_palm])
             bound_ball_copy = copy.deepcopy(bound_ball)
             unbound_results = classification(
-                frame, bound_ball, tracker.prev_pair_ball, tracker.pair_ball, pattern_model)
+                frame,
+                bound_ball,
+                tracker.prev_pair_ball,
+                tracker.pair_ball,
+                pattern_model,
+            )
 
             # analysis result and display on dashboard
             frame = create_dashboard(frame)
@@ -153,17 +169,30 @@ def main(_argv):
 
             # perform bound tracking
             demo, pred_balls = tracker.bound_tracking(
-                demo, unbound_results, bound_ball_copy)
+                demo, unbound_results, bound_ball_copy
+            )
             bound_results = classification(
-                frame, pred_balls, tracker.prev_pair_ball, tracker.pair_ball, pattern_model)
+                frame,
+                pred_balls,
+                tracker.prev_pair_ball,
+                tracker.pair_ball,
+                pattern_model,
+            )
             results = unbound_results + bound_results
             bound_ball.extend(pred_balls)
 
             # display result - simulation and draw bbox on frame
-            demo, ptns = display_demo(demo, results, ptns, bound_ball, tracker.pair_ball, [
-                                      right_palm, left_palm])
-            frame = draw_bbox(frame, bound_ball, tracker.pair_ball, [
-                              right_palm, left_palm])
+            demo, ptns = display_demo(
+                demo,
+                results,
+                ptns,
+                bound_ball,
+                tracker.pair_ball,
+                [right_palm, left_palm],
+            )
+            frame = draw_bbox(
+                frame, bound_ball, tracker.pair_ball, [right_palm, left_palm]
+            )
 
             # display frame
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
@@ -180,7 +209,7 @@ def main(_argv):
             cv2.imshow("demo", demo)
         cv2.moveWindow("output", 0, 0)
         cv2.moveWindow("demo", int(rescale_width), 0)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
         # printout fps
@@ -198,7 +227,7 @@ def main(_argv):
             demo_out.write(demo)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         app.run(main)
     except SystemExit:
