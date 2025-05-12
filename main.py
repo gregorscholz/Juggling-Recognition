@@ -47,7 +47,8 @@ def main(_argv):
     # process all video when use_dir-Flag is set to true
     if FLAGS.use_dir:
         for video_name in os.listdir(FLAGS.dir):
-            process_video(FLAGS.dir + "\\" + video_name)
+            if str (video_name).endswith(".mp4"):
+                process_video(FLAGS.dir + "\\" + video_name)
     else:
         process_video(FLAGS.video)
 
