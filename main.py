@@ -40,12 +40,20 @@ flags.DEFINE_string(
     "path to pattern recognition model",
 )
 flags.DEFINE_boolean("gpu", False, "activate gpu - True else False")
-
+flags.DEFINE_bool("use_dir", False, "process all videos in selected dir")
+flags.DEFINE_string("dir", "videos", "path to input videos")
 
 def main(_argv):
+    # process all video when use_dir-Flag is set to true
+    if FLAGS.use_dir:
+        for video_name in os.listdir(FLAGS.dir):
+            process_video(FLAGS.dir + "\\" + video_name)
+    else:
+        process_video(FLAGS.video)
+
+def process_video(video_name: str):
     # initialize all the FLAGS setting
     input_size = FLAGS.size
-    video_path = FLAGS.video
     gpu = FLAGS.gpu
     weights_ball = FLAGS.weights_ball
     weights_palm = FLAGS.weights_palm
@@ -55,6 +63,8 @@ def main(_argv):
     output = FLAGS.output
     demo_output = FLAGS.demo_output
     output_format = FLAGS.output_format
+
+    video_path = video_name
 
     if gpu:
         # set up gpu setting
@@ -98,7 +108,7 @@ def main(_argv):
         return_value, frame = vid.read()
         if not return_value:
             print("Video processing complete")
-            os._exit(0)
+            break
 
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame = cv2.resize(frame, (image_width, image_height))
@@ -165,7 +175,7 @@ def main(_argv):
             frame = create_dashboard(frame)
             frame = analysis(pair_ball, tracker.pair_ball, frame)
             frame = pose_detector.distance_estimation(frame)
-            frame, dmeo = pose_detector.find_Elbow_angle(frame, demo)
+            frame, demo = pose_detector.find_Elbow_angle(frame, demo)
 
             # perform bound tracking
             demo, pred_balls = tracker.bound_tracking(
